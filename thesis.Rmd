@@ -1,0 +1,816 @@
+---
+title: "Thesis"
+output: html_document
+---
+
+
+```{r}
+#Packages
+#install.packages("ggplot2", dependencies = TRUE)
+#install.packages("magrittr") 
+#install.packages("dplyr")  
+#install.packages("fmsb") 
+#install.packages("psych")  
+#install.packages("rpart.plot") 
+#install.packages("olsrr") 
+#install.packages("plotrix")
+
+library(plotrix)
+library(olsrr)
+library(ggplot2)  
+library(magrittr)  
+library(dplyr)   
+library(scales)
+library(fmsb)
+library(psych)
+library(rpart)
+library(RColorBrewer)
+library(rpart.plot)
+```
+
+
+
+
+
+```{r}
+#Read data
+Dating = read.csv("SpeedDatingData.csv")
+
+```
+
+```{r}
+#adding column
+#self estimate 3_1
+
+Dating$p_attr3_1 = 0
+for (i in 1:8378){
+  iid1 = Dating[i,]$iid
+  pid1 = Dating[i,]$pid
+  subset1 = subset(Dating,iid == pid1)
+  p_attr3_1_1 = subset1[1,]$attr3_1
+  Dating[i,]$p_attr3_1 = p_attr3_1_1
+}
+
+Dating$p_amb3_1 = 0
+for (i in 1:8378){
+  iid1 = Dating[i,]$iid
+  pid1 = Dating[i,]$pid
+  subset1 = subset(Dating,iid == pid1)
+  p_amb3_1_1 = subset1[1,]$amb3_1
+  Dating[i,]$p_amb3_1 = p_amb3_1_1
+}
+
+Dating$p_int3_1 = 0
+for (i in 1:8378){
+  iid1 = Dating[i,]$iid
+  pid1 = Dating[i,]$pid
+  subset1 = subset(Dating,iid == pid1)
+  p_int3_1_1 = subset1[1,]$int3_1
+  Dating[i,]$p_int3_1 = p_int3_1_1
+}
+
+Dating$p_fun3_1 = 0
+for (i in 1:8378){
+  iid1 = Dating[i,]$iid
+  pid1 = Dating[i,]$pid
+  subset1 = subset(Dating,iid == pid1)
+  p_fun3_1_1 = subset1[1,]$fun3_1
+  Dating[i,]$p_fun3_1 = p_fun3_1_1
+}
+
+Dating$p_sinc3_1 = 0
+for (i in 1:8378){
+  iid1 = Dating[i,]$iid
+  pid1 = Dating[i,]$pid
+  subset1 = subset(Dating,iid == pid1)
+  p_sinc3_1_1 = subset1[1,]$sinc3_1
+  Dating[i,]$p_sinc3_1 = p_sinc3_1_1
+}
+
+
+
+write.csv(Dating1, file = "test1.csv")
+test = read.csv("test1.csv")
+
+```
+
+
+```{r}
+# factorize
+Dating$race_o = as.factor(Dating$race_o)
+Dating$race = as.factor(Dating$race)
+Dating$goal = as.factor(Dating$goal)
+Dating$gender = as.factor(Dating$gender)
+
+
+```
+
+
+
+```{r}
+#Data Subsets
+
+#gender
+women = subset(Dating,gender == "0")
+
+men = subset(Dating,gender == "1")
+
+#race
+
+black = subset(Dating,race == "1")
+
+
+europe = subset(Dating,race == "2")
+
+
+latin = subset(Dating,race == "3")
+
+
+asia = subset(Dating,race == "4")
+
+#race&gender
+blackwomen = subset(Dating,race == "1" & gender == "0")
+blackmen = subset(Dating,race == "1" & gender == "1")
+
+europewomen = subset(Dating,race == "2" & gender == "0")
+europemen = subset(Dating,race == "2" & gender == "1")
+
+latinwomen = subset(Dating,race == "3" & gender == "0")
+latinmen = subset(Dating,race == "3" & gender == "1")
+
+asiawomen = subset(Dating,race == "4" & gender == "0")
+asiamen = subset(Dating,race == "4" & gender == "1")
+
+
+
+```
+
+
+```{r}
+#gender
+hist(women$dec,ylim=c(0,3000),breaks = 2,freq = TRUE)
+length(which(women$dec == 0))
+length(which(women$dec == 1))
+slices <- c(1529,2655)
+lbls <- c("Yes","No" )
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pie(slices,labels = lbls, col=rainbow(length(lbls)),
+   main="Pie Chart of Women' decision")
+
+hist(men$dec,ylim=c(0,3000),breaks = 2,freq = TRUE)
+length(which(men$dec == 0))
+length(which(men$dec == 1))
+slices <- c(1989,2205)
+lbls <- c("Yes","No")
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pie(slices,labels = lbls, col=c("red","cyan"),
+   main="Pie Chart of men' decision")
+
+modelgender <- lm(dec~gender,data = Dating)
+summary(modelgender)
+
+summary(women$go_out)
+summary(man$go_out)
+hist(man$go_out,breaks = 6,freq = TRUE, col = "cyan")
+hist(women$go_out,breaks = 6,freq = TRUE,col = "pink")
+2.177/2.139
+
+summary(women$attr_o)
+summary(man$attr_o)
+hist(man$attr_o,breaks = 9,freq = TRUE, col = "cyan")
+hist(women$attr_o,breaks = 9,freq = TRUE,col = "pink")
+6.461/5.919
+
+modelattr <- lm(dec ~ attr_o, data = Dating)
+summary(modelattr)
+
+
+
+```
+
+
+
+
+
+```{r}
+#Race 1.1
+#See if race matter overal rare
+(TotalMatch = length(which(Dating$match == "1")))
+(DifferentRaceMatch = length(which(Dating$match == "1" & Dating$samerace == "0")))
+(SameRaceMatch = length(which(Dating$match == "1" & Dating$samerace == "1")))
+DifferentRaceMatch/TotalMatch
+SameRaceMatch/TotalMatch
+
+modelrace <- glm(dec~samerace,data = Dating)
+summary(modelrace)
+#not rare in speed dating compare to marriage
+```
+
+
+
+```{r}
+#Race 1.2
+#See man or women more sensitive to same race
+(MenTotalYes = length(which(Dating$dec == "1" & Dating$gender == "1")))
+(MenTotalNo = length(which(Dating$dec == "0" & Dating$gender == "1")))
+(WomenTotalYes = length(which(Dating$dec == "1" & Dating$gender == "0")))
+(WomenTotalNo = length(which(Dating$dec == "0" & Dating$gender == "0")))
+(MenTotalYesSameRace = length(which(Dating$dec == "1" & Dating$gender == "1" & Dating$samerace == "1")))
+(MenTotalYesDiffRace = length(which(Dating$dec == "1" & Dating$gender == "1" & Dating$samerace == "0")))
+(MenTotalNoSameRace = length(which(Dating$dec == "0" & Dating$gender == "1" & Dating$samerace == "1")))
+(MenTotalNoDiffRace = length(which(Dating$dec == "0" & Dating$gender == "1" & Dating$samerace == "0")))
+(WomenTotalYesSameRace = length(which(Dating$dec == "1" & Dating$gender == "0" & Dating$samerace == "1")))
+(WomenTotalYesDiffRace = length(which(Dating$dec == "1" & Dating$gender == "0" & Dating$samerace == "0")))
+(WomenTotalNoSameRace = length(which(Dating$dec == "0" & Dating$gender == "0" & Dating$samerace == "1")))
+(WomenTotalNoDiffRace = length(which(Dating$dec == "0" & Dating$gender == "0" & Dating$samerace == "0")))
+#MenTotalDecSameRace/MenTotalDec
+#MenTotalDecDiffRace/MenTotalDec
+#WomenTotalDecSameRace/WomenTotalDec
+#WomenTotalDecDiffRace/WomenTotalDec
+MenTotalYesSameRace / (MenTotalYesSameRace + MenTotalNoSameRace)
+MenTotalYesDiffRace / (MenTotalYesDiffRace + MenTotalNoDiffRace)
+WomenTotalYesSameRace / (WomenTotalYesSameRace + WomenTotalNoSameRace)
+WomenTotalYesDiffRace / (WomenTotalYesDiffRace + WomenTotalNoDiffRace)
+
+
+modelfrace <- glm(dec ~ samerace , data=women,family = "binomial")
+summary(modelfrace)
+modelmrace <- glm(dec ~ samerace , data=men,family = "binomial")
+summary(modelmrace)
+
+# Women are more sensitive to race and said more yes to same race.
+```
+
+
+
+```{r}
+#Race 1.3
+#Different race opinion to different race 
+
+# Female
+
+#Male1Black1 <- Female0Black1 
+(TotalYesMBFB = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "1")))
+(TotalNoMBFB = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "1")))
+TotalYesMBFB/TotalFB
+#Male1Black1 <- Female0Europe2 
+(TotalYesMBFE = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "2")))
+(TotalNoMBFE = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "2")))
+TotalYesMBFE/TotalFE
+#Male1Black1 <- Female0Lati3 
+(TotalYesMBFL = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "3")))
+(TotalNoMBFL = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "3")))
+TotalYesMBFL/TotalFL
+#Male1Black1 <- Female0Asia4 
+(TotalYesMBFA = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "4")))
+(TotalNoMBFA = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "1" & Dating$race == "1" & Dating$race_o == "4")))
+TotalYesMBFA/TotalFA
+
+
+#Male1Europe1 <- Female0Black1 
+(TotalYesMEFB = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "1")))
+(TotalNoMEFB = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "1")))
+TotalYesMEFB/TotalFB
+#Male1Europe1 <- Female0Europe2 
+(TotalYesMEFE = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "2")))
+(TotalNoMEFE = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "2")))
+TotalYesMEFE/TotalFE
+#Male1Europe1 <- Female0Lati3 
+(TotalYesMEFL = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "3")))
+(TotalNoMEFL = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "3")))
+TotalYesMEFL/TotalFL
+#Male1Europe1 <- Female0Asia4 
+(TotalYesMEFA = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "4")))
+(TotalNoMEFA = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "1" & Dating$race == "2" & Dating$race_o == "4")))
+TotalYesMEFA/TotalFA
+
+
+#Male1Lati3 <- Female0Black1 
+(TotalYesMLFB = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "1")))
+(TotalNoMLFB = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "1")))
+TotalYesMLFB/TotalFB
+
+#Male1Lati3 <- Female0Europe2 
+(TotalYesMLFE = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "2")))
+(TotalNoMLFE = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "2")))
+TotalYesMLFE/TotalFE
+
+#Male1Lati3 <- Female0Lati3 
+(TotalYesMLFL = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "3")))
+(TotalNoMLFL = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "3")))
+TotalYesMLFL/TotalFL
+
+#Male1Lati3 <- Female0Asia4 
+(TotalYesMLFA = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "4")))
+(TotalNoMLFA = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "1" & Dating$race == "3" & Dating$race_o == "4")))
+TotalYesMLFA/TotalFA
+
+
+#Male1Asia4 <- Female0Black1 
+(TotalYesMAFB = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "1")))
+(TotalNoMAFB = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "1")))
+TotalYesMAFB/TotalFB
+
+#Male1Asia4 <- Female0Europe2 
+(TotalYesMAFE = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "2")))
+(TotalNoMAFE = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "2")))
+TotalYesMAFE/TotalFE
+
+#Male1Asia4 <- Female0Lati3 
+(TotalYesMAFL = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "3")))
+(TotalNoMAFL = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "3")))
+TotalYesMAFL/TotalFL
+
+#Male1Asia4 <- Female0Asia4 
+(TotalYesMAFA = length(which(Dating$dec_o == "1" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "4")))
+(TotalNoMAFA = length(which(Dating$dec_o == "0" & Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "1" & Dating$race == "4" & Dating$race_o == "4")))
+TotalYesMAFA/TotalFA
+
+```
+
+
+
+
+
+
+
+
+```{R}
+#Male
+
+#Male1Black1 -> Female0Black1 
+(TotalYesMBFB = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "1")))
+(TotalNoMBFB = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "1")))
+TotalYesMBFB/TotalFB
+#Male1Black1 -> Female0Europe2 
+(TotalYesMBFE = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "2")))
+(TotalNoMBFE = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "2")))
+TotalYesMBFE/TotalFE
+#Male1Black1 -> Female0Lati3 
+(TotalYesMBFL = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "3")))
+(TotalNoMBFL = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "3")))
+TotalYesMBFL/TotalFL
+#Male1Black1 -> Female0Asia4 
+(TotalYesMBFA = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "4")))
+(TotalNoMBFA = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "0" & Dating$race == "1" & Dating$race_o == "4")))
+TotalYesMBFA/TotalFA
+
+
+#Male1Europe1 -> Female0Black1 
+(TotalYesMEFB = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "1")))
+(TotalNoMEFB = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "1")))
+TotalYesMEFB/TotalFB
+#Male1Europe1 -> Female0Europe2 
+(TotalYesMEFE = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "2")))
+(TotalNoMEFE = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "2")))
+TotalYesMEFE/TotalFE
+#Male1Europe1 -> Female0Lati3 
+(TotalYesMEFL = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "3")))
+(TotalNoMEFL = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "3")))
+TotalYesMEFL/TotalFL
+#Male1Europe1 -> Female0Asia4 
+(TotalYesMEFA = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "4")))
+(TotalNoMEFA = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "0" & Dating$race == "2" & Dating$race_o == "4")))
+TotalYesMEFA/TotalFA
+
+#Male1Lati3 -> Female0Black1 
+(TotalYesMLFB = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "1")))
+(TotalNoMLFB = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "1")))
+TotalYesMLFB/TotalFB
+
+#Male1Lati3 -> Female0Europe2 
+(TotalYesMLFE = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "2")))
+(TotalNoMLFE = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "2")))
+TotalYesMLFE/TotalFE
+
+#Male1Lati3 -> Female0Lati3 
+(TotalYesMLFL = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "3")))
+(TotalNoMLFL = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "3")))
+TotalYesMLFL/TotalFL
+
+#Male1Lati3 -> Female0Asia4 
+(TotalYesMLFA = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "4")))
+(TotalNoMLFA = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "0" & Dating$race == "3" & Dating$race_o == "4")))
+TotalYesMLFA/TotalFA
+
+#Male1Asia4 -> Female0Black1 
+(TotalYesMAFB = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "1")))
+(TotalNoMAFB = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "1")))
+(TotalFB = length(which( Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "1")))
+TotalYesMAFB/TotalFB
+
+#Male1Asia4 -> Female0Europe2 
+(TotalYesMAFE = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "2")))
+(TotalNoMAFE = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "2")))
+(TotalFE = length(which( Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "2")))
+TotalYesMAFE/TotalFE
+
+#Male1Asia4 -> Female0Lati3 
+(TotalYesMAFL = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "3")))
+(TotalNoMAFL = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "3")))
+(TotalFL = length(which( Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "3")))
+TotalYesMAFL/TotalFL
+
+#Male1Asia4 -> Female0Asia4 
+(TotalYesMAFA = length(which(Dating$dec_o == "1" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "4")))
+(TotalNoMAFA = length(which(Dating$dec_o == "0" & Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "4")))
+(TotalFA = length(which( Dating$gender == "0" & Dating$race == "4" & Dating$race_o == "4")))
+TotalYesMAFA/TotalFA
+
+```
+
+
+```{r}
+#race&gender same race
+modelBF <- glm(dec ~ samerace, data = blackwomen,na.action=na.exclude)
+summary(modelBF)
+modelEF <- glm(dec ~ samerace, data = europewomen,na.action=na.exclude)
+summary(modelEF)
+modelLF <- glm(dec ~ samerace, data = latinwomen,na.action=na.exclude)
+summary(modelLF)
+modelAF <- glm(dec ~ samerace, data = asiawomen,na.action=na.exclude)
+summary(modelAF)
+
+modelBM <- glm(dec ~ samerace, data = blackmen,na.action=na.exclude)
+summary(modelBM)
+modelEM <- glm(dec ~ samerace, data = europemen,na.action=na.exclude)
+summary(modelEM)
+modelLM <- glm(dec ~ samerace, data = latinmen,na.action=na.exclude)
+summary(modelLM)
+modelAM <- glm(dec ~ samerace, data = asiamen,na.action=na.exclude)
+summary(modelAM)
+
+
+```
+
+
+```{r}
+#gender&race
+
+#Female
+modelBF <- glm(dec ~ race_o, data = blackwomen,na.action=na.exclude)
+summary(modelBF)
+
+
+europewomen <- within(europewomen, race_o <- relevel(race_o, ref = 2))
+modelEF <- glm(dec ~ race_o, data=europewomen,na.action=na.exclude)
+summary(modelEF)
+
+latinwomen <- within(latinwomen, race_o <- relevel(race_o, ref = 3))
+modelLF <- glm(dec ~ race_o, data=latinwomen,na.action=na.exclude)
+summary(modelLF)
+
+asiawomen <- within(asiawomen, race_o <- relevel(race_o, ref = 4))
+modelAF <- glm(dec ~ race_o, data=asiawomen,na.action=na.exclude)
+summary(modelAF)
+
+#Male
+modelBM <- glm(dec ~ race_o, data = blackmen,na.action=na.exclude)
+summary(modelBM)
+
+
+europemen <- within(europemen, race_o <- relevel(race_o, ref = 2))
+modelEM <- glm(dec ~ race_o, data=europemen,na.action=na.exclude)
+summary(modelEM)
+
+latinmen <- within(latinmen, race_o <- relevel(race_o, ref = 3))
+modelLM <- glm(dec ~ race_o, data=latinmen,na.action=na.exclude)
+summary(modelLM)
+
+asiamen <- within(asiamen, race_o <- relevel(race_o, ref = 4))
+modelAM <- glm(dec ~ race_o, data=asiamen,na.action=na.exclude)
+summary(modelAM)
+```
+
+```{r}
+#age
+summary(Dating$age)
+modelage <- lm(dec ~ age,data=Dating,na.action=na.exclude)
+summary(modelage)
+modelage <- lm(dec ~ age + age*gender,data=Dating,na.action=na.exclude)
+summary(modelage)
+modelage <- lm(dec ~ age + age*race,data=Dating,na.action=na.exclude)
+summary(modelage)
+modelage <- lm(dec ~ age,data=latin,na.action=na.exclude)
+summary(modelage)
+modelage <- lm(dec ~ age,data=latinmen,na.action=na.exclude)
+summary(modelage)
+modelage <- lm(dec ~ age,data=latinwomen,na.action=na.exclude)
+summary(modelage)
+
+
+women$agedif <- women$age_o - women$age
+modelage <- lm(dec ~ agedif,data=women,na.action=na.exclude)
+summary(modelage)
+women$ifolder <- women$age_o > women$age
+modelage <- glm(dec ~ ifolder,data=women,na.action=na.exclude)
+summary(modelage)
+
+
+
+men$agedif <- men$age_o - men$age
+modelage <- lm(dec ~ agedif,data=men)
+summary(modelage)
+men$ifolder <- men$age_o > men$age
+modelage <- glm(dec ~ ifolder,data=men)
+summary(modelage)
+
+```
+
+
+
+
+
+
+```{r}
+#goal
+summary(Dating$goal)
+Dating <- within(Dating, goal <- relevel(goal, ref = 5))
+summary(women$goal)
+women <- within(women, goal <-   relevel(goal, ref = 5))
+summary(men$goal)
+men <- within(men, goal <-       relevel(goal, ref = 5))
+
+modelgoal <- glm(dec ~ goal,data=Dating,na.action=na.exclude)
+summary(modelgoal)
+modelgoal <- glm(dec_o ~ goal,data=Dating,na.action=na.exclude)
+summary(modelgoal)
+
+
+modelgoal <- glm(dec ~ goal,data=women)
+summary(modelgoal)
+modelgoal <- glm(dec_o ~ goal,data=women)
+summary(modelgoal)
+
+summary(women$attr)
+modelgoal <- lm(attr ~ goal,data=women)
+summary(modelgoal)
+
+modelgoal <- glm(dec ~ factor(goal),data=men)
+summary(modelgoal)
+modelgoal <- glm(dec_o ~ goal,data=men)
+summary(modelgoal)
+
+summary(men$attr)
+modelgoal <- lm(attr ~ goal,data=men)
+summary(modelgoal)
+```
+
+
+```{r}
+#go out
+summary(Dating$go_out)
+
+
+modelgo_out <- lm(dec ~ go_out,data=Dating)
+summary(modelgo_out)
+modelgo_out <- lm(dec_o ~ go_out,data=Dating)
+summary(modelgo_out)
+
+
+modelgo_out <- lm(dec ~ go_out,data=women)
+summary(modelgo_out)
+modelgo_out <- lm(dec_o ~ go_out,data=women)
+summary(modelgo_out)
+
+modelgo_out <- lm(dec ~ go_out,data=men)
+summary(modelgo_out)
+modelgo_out <- lm(dec_o ~ go_out,data=men)
+summary(modelgo_out)
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+#Creating a column with a number of dates of a subject
+Freq = table(Dating$iid)
+Freq = data.frame(Freq)
+names(Freq)= c("iid", "NumOfDates")
+Dating = merge(Dating, Freq, by = "iid")
+
+
+
+#Creating a column informing in percentage how often a subject was chosen by a partner for a 
+#second date
+Pop = aggregate(Dating$dec, list(Dating$pid), sum)
+names(Pop)= c("iid", "Popular")
+Dating = merge(Dating, Pop, by = "iid")
+Dating$PoPRel = Dating$Popular/Dating$NumOfDates * 100
+
+```
+
+
+```{r}
+
+
+model <- lm(dec_o ~  order  + int_corr + samerace + age_o + race_o + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+ attr_o	+sinc_o+	intel_o+	fun_o+	amb_o+	shar_o +	prob_o	+met_o	+age + race+	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ dec +	attr+	sinc+	intel	+fun	+amb+	shar +	met			,data = women,na.action=na.omit)
+
+summary(model)
+
+ols_step_forward_p(model) # aic 3014  R 0.325
+
+ols_step_backward_p(model) # aic 3746  R 0.321
+
+ols_step_forward_aic(model) #aic 646 R 0.348
+
+ols_step_backward_aic(model) # aic 649  R 0.362
+
+
+
+```
+
+#DatingML
+```{r}
+#decision tree
+
+
+women_fit <- rpart(dec_o ~ order  + int_corr + samerace + age_o + race_o + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+ attr_o	+sinc_o+	intel_o+	fun_o+	amb_o+	shar_o +	met_o	+age + race+	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ dec +	attr+	sinc+	intel	+fun	+amb+	shar +	met	, 
+                 data = women, method = "class")
+rpart.plot(women_fit)
+
+shuffled_women <- sample_n(women, nrow(women))
+split_women <- 0.8*nrow(shuffled_women)
+train_women <- shuffled_women[1:split_women, ]
+test_women <- shuffled_women[(split_women + 1) : nrow(shuffled_women), ]
+
+women_fit_test <- rpart(dec_o ~ order  + int_corr + samerace + age_o + race_o + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+ attr_o	+sinc_o+	intel_o+	fun_o+	amb_o+	shar_o +	met_o	+age + race+	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ dec +	attr+	sinc+	intel	+fun	+amb+	shar +	met	, 
+                      data = train_women, method = "class")
+tree_predictions_women <- predict(women_fit_test, train_women, type = "class")
+mean(tree_predictions_women == train_women$dec_o)
+tree_predictions_women <- predict(women_fit_test, test_women, type = "class")
+mean(tree_predictions_women == test_women$dec_o)
+
+```
+
+
+```{r}
+#
+```
+
+
+```{r}
+install.packages("gdata")
+library(gdata)
+
+
+#lm.full <- lm(dec_o ~  order  + int_corr + samerace + age_o + race_o + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+ attr_o	+sinc_o+	intel_o+	fun_o+	amb_o+	shar_o+	like_o+	prob_o	+met_o	+age + race+	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ dec +	attr+	sinc+	intel	+fun	+amb+	shar +	met		+attr1_2+	sinc1_2+	intel1_2+	fun1_2+	amb1_2+	shar1_2+	attr3_2	+sinc3_2	+intel3_2	+fun3_2	+amb3_2	+attr1_3+	sinc1_3+	intel1_3+	fun1_3+	amb1_3+	shar1_3+attr3_3	+sinc3_3+	intel3_3+	fun3_3+	amb3_3,data = women,na.action=na.omit)
+
+lm.full <- lm(dec_o ~  order  + int_corr + samerace + age_o + race_o + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+ attr_o	+sinc_o+	intel_o+	fun_o+	amb_o+	shar_o +	prob_o	+met_o	+age + race+	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ dec +	attr+	sinc+	intel	+fun	+amb+	shar +	met		,data = women,na.action=na.omit)
+
+lm.null <- lm(dec_o ~ 1, data = women)
+
+drop1(lm.full, test = "F")
+drop1(update(lm.full, ~ . -shar_o), test = "F")
+drop1(update(lm.full, ~ . -shar_o-sinc3_1), test = "F")
+drop1(update(lm.full, ~ . -shar_o-sinc3_1-samerace), test = "F")
+drop1(update(lm.full, ~ . -shar_o-sinc3_1-samerace-go_out), test = "F")
+
+```
+
+
+#DatingML
+```{r}
+#decision tree after
+
+women_fit <- rpart(dec_o ~ order  + int_corr + samerace + age_o  + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha 	+met_o	+age + race + race_o +	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+	shar +	met	, 
+                 data = women, method = "class")
+rpart.plot(women_fit)
+
+shuffled_women <- sample_n(women, nrow(women))
+split_women <- 0.8*nrow(shuffled_women)
+train_women <- shuffled_women[1:split_women, ]
+test_women <- shuffled_women[(split_women + 1) : nrow(shuffled_women), ]
+
+women_fit_test <- rpart(dec_o ~ order +  int_corr + samerace + age_o  + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha +	shar_o 	+met_o	+age + race + race_o +	imprace	+imprelig	+	goal	+date	+ go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ shar +	met	, 
+                      data = train_women, method = "class")
+tree_predictions_women <- predict(women_fit_test, train_women, type = "class")
+mean(tree_predictions_women == train_women$dec_o)
+tree_predictions_women <- predict(women_fit_test, test_women, type = "class")
+mean(tree_predictions_women == test_women$dec_o)
+
+```
+
+
+```{r}
+#
+```
+
+
+```{r}
+install.packages("gdata")
+library(gdata)
+
+
+#lm.full <- lm(dec_o ~  order  + int_corr + samerace + age_o + race_o + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+ attr_o	+sinc_o+	intel_o+	fun_o+	amb_o+	shar_o+	like_o+	prob_o	+met_o	+age + race+	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ dec +	attr+	sinc+	intel	+fun	+amb+	shar +	met		+attr1_2+	sinc1_2+	intel1_2+	fun1_2+	amb1_2+	shar1_2+	attr3_2	+sinc3_2	+intel3_2	+fun3_2	+amb3_2	+attr1_3+	sinc1_3+	intel1_3+	fun1_3+	amb1_3+	shar1_3+attr3_3	+sinc3_3+	intel3_3+	fun3_3+	amb3_3,data = women,na.action=na.omit)
+
+lm.full <- lm(dec_o ~  order  + int_corr + samerace + age_o + race_o + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+ attr_o	+sinc_o+	intel_o+	fun_o+	amb_o+	shar_o +	prob_o	+met_o	+age + race+	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1	+ dec +	attr+	sinc+	intel	+fun	+amb+	shar +	met		,data = women,na.action=na.omit)
+
+lm.null <- lm(dec_o ~ 1, data = women)
+
+drop1(lm.full, test = "F")
+drop1(update(lm.full, ~ . -shar_o), test = "F")
+drop1(update(lm.full, ~ . -shar_o-sinc3_1), test = "F")
+drop1(update(lm.full, ~ . -shar_o-sinc3_1-samerace), test = "F")
+drop1(update(lm.full, ~ . -shar_o-sinc3_1-samerace-go_out), test = "F")
+
+```
+
+```{r}
+# after
+
+model <- lm(dec_o ~  order  + int_corr + samerace + age_o  + pf_o_att +	pf_o_sin	+ pf_o_int+	pf_o_fun+	pf_o_amb+	pf_o_sha+	shar_o 	+met_o	+age + race + race_o +	imprace	+imprelig	+	goal	+date	+go_out	+	sports+	tvsports+	exercise +dining+	museums+	art+	hiking+	gaming+	clubbing+	reading	+tv	+theater+	movies+	concerts+	music+	shopping+	yoga+	exphappy+	expnum+	attr1_1	+sinc1_1	+intel1_1+	fun1_1+	amb1_1+	shar1_1+	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+	sinc3_1+	fun3_1+	intel3_1+	amb3_1 +	shar + met 		,data = women,na.action=na.omit)
+
+summary(model)
+
+ols_step_forward_p(model) # aic 3014  R 0.325
+
+ols_step_backward_p(model) # aic 3746  R 0.321
+
+ols_step_forward_aic(model) #aic 646 R 0.348
+
+ols_step_backward_aic(model) # aic 649  R 0.362
+
+
+
+```
+```{r}
+lm.selected <- lm(dec_o ~   order  + int_corr    + pf_o_int+	pf_o_fun+		pf_o_sha+	shar_o 		 + race 	+imprelig	+	goal	+date		+	sports+	exercise +			gaming+	clubbing+	reading	+theater+	movies+	concerts +	music+		yoga +	expnum +	amb1_1 +	attr2_1+	sinc2_1	+intel2_1+	fun2_1	+amb2_1+	shar2_1+	attr3_1+		intel3_1+	amb3_1 +	shar + met 		,data = women,na.action=na.omit)
+
+summary(lm.selected)
+
+```
+
+
+
